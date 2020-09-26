@@ -1,0 +1,299 @@
+<head>
+    <meta charset="utf-8">
+  
+    <title>CS194-26 Proj 2: Fun with Filters</title>
+    <meta name="description" content="Project 1">
+    <meta name="author" content="Mingjun Lim">
+  
+    <!-- <link rel="stylesheet" href="css/styles.css?v=1.0"> -->
+  
+  </head>
+  
+  <body>
+    <h1>CS194-26 Proj 2: Fun with Filters and Frequencies!</h1>
+    <h2>By Mingjun Lim
+      
+      <h2>Overview:</h2>
+        <p>
+        In this project, I worked with frequencies and filter techniques to create cool images!
+        </p>
+      <h2>Part 1: Fun with Filters</h2>
+      <h3>1.1 & 1.2: Finite Difference Operator and Derivative of Gaussian Filter</h3>
+        <p>
+        To start this section, we experimented with the use of finite difference operator to perform edge detection. Using D_x of [1, -1], and D_y of [1, -1]T, we convolved the given image with D_x and D_y to produce 2 images.
+        These images showed, respectively, edges within image with edges in the x and y direction. To obtain the gradient magnitude of each edge, we simply took the magnitude of each pixel by taking sqrt(x^2, y^2).
+        To sharpen the results, we binarized the image to obtain the following result.
+        </p>
+        <img src="./part_1/magnitude_1.png" width="700" height="525">
+
+        <p>
+        While this image revealed most of the edges of the cameraman, it was also noisy due to the noise in the original image. To counteract this, we performed a gaussian blur on the image to smoothen out the original image, before taking the gradient magnitude again.
+        This yielded a much cleaner result. As seen (below), most of the noise was successfully eliminated.
+        </p>
+        <img src="./part_1/magnitude_2.png" width="700" height="525">
+
+        <p>
+        We also attempted to perform a single convolution by convolving our gaussian filter with the D_x and D_y finite diference filters to create x and y gaussian filters (displayed below), before applying those filters to the image and taking the resulting image magnitude.
+        This yielded the exact same results as before.
+        </p>
+        <img src="./part_1/x_gaussian_filter.png" width="700" height="525">
+        <img src="./part_1/y_gaussian_filter.png" width="700" height="525">
+
+      <h3>1.3: Image Straightening</h3>
+        <p>We also attempted to use what we learned to straighten images that might have been slightly slanted or off by a slight angle. Given the slightly slanted following image:</p>
+        <img src="./input/facade.jpg" width="700" height="525">
+        <p>
+        We wanted to find the best rotation such that it appears straightened.
+        To do so, we searched a span of += 10 degrees, trying to find the rotation that yielded the greatest number of horizontal and vertical lines. (We assumed that this image would most likely be straightened)
+        For each rotation, we first
+        <p>
+        1) Cropped the image to the center by eliminating a 1/2 of it's length and width on the edges. 
+        </p>
+        <p>
+        2) Then, we generated the angle of each pixel by convolving with the finite difference filters to receive Delta_x and Delta_y, then taking hte arctan2(-Delta_y, Delta_x) to obtain each angle. This gives us a matrix of angles, ANGLES
+        </p>
+        <p>
+        3) Since we want to make sure that we only take angles of real edges in the image, we used our edge detection algorithm from part 1.2 to get the edges of the cropped image to get edges, and used these edges as a mask over ANGLES so we only consider angles on the edges of our image.
+        </p>
+        <p>
+        4) Finally, we summed the number of pixels that had angles close to 0, 90, 180, 270 or 360 (denoting horizontal or vertical edges) and scored the rotation using sum/num_pixels_considered, where num_pixels_considered is the number of nonzero pixels after applying our mask.
+        </p>
+        <p>
+        Since in step 4) we don't want to consider pixels with 0 values (since they denote pixels that were zeroed by our mask), we had an additional step in 2) where after computing the angles of all pixels, we changed all angles with value 0 to 360 degrees. This allows us to count pixels that were 0 before the mask.
+        This gave us the following histograms, before and after rotation.
+        </p>
+        <img src="./histograms/facade_regular.png" width="700" height="525">
+        <img src="./histograms/facade_rotated.png" width="700" height="525">
+        <p>
+        We also got a great rotation of -3 degrees to give us the straightened image:
+        </p>
+        <img src="./rotated/facade_rotated.jpg" width="700" height="525">
+
+        <p>
+        We tried this on a few more images to great results:
+        </p>
+        <img src="./input/korea.jpg" width="1000" height="1400">
+        <img src="./histograms/korea_regular.png" width="700" height="525">
+        <br>
+        <img src="./rotated/korea_rotated.jpg" width="1000" height="1400">
+        <img src="./histograms/korea_rotated.png" width="700" height="525">
+
+        <p>
+        Others:
+        </p>
+
+        <img src="./input/taiwan_2.jpg" width="700" height="525">
+        <img src="./histograms/taiwan_2_regular.png" width="700" height="525">
+        <br>
+        <img src="./rotated/taiwan_2_rotated.jpg" width="700" height="525">
+        <img src="./histograms/taiwan_2_rotated.png" width="700" height="525">
+        <br>
+
+        <img src="./input/london.jpg" width="700" height="525">
+        <img src="./histograms/london_regular.png" width="700" height="525">
+        <br>
+        <img src="./rotated/london_rotated.jpg" width="700" height="525">
+        <img src="./histograms/london_rotated.png" width="700" height="525">
+        <br>
+
+        <img src="./input/taiwan.jpg" width="700" height="525">
+        <img src="./histograms/taiwan_regular.png" width="700" height="525">
+        <br>
+        <img src="./rotated/taiwan_rotated.jpg" width="700" height="525">
+        <img src="./histograms/taiwan_rotated.png" width="700" height="525">
+
+        <p>
+        Among the 4 images, the 3rd image was particularly successful in achieving a good rotation. This could be due to the guiding grid lines in the background that helped orientate the photo to a natural x-y alignment.
+        The failure case is the last image shown of a pagoda among greenery. While the original image was fairly straight, the image straightening algorithm seemed to slant the image slightly. This might be due to the sparisty of edges in the middle of the image (which is mostly sky), which made it hard for the algorithm to align any x and y edges.
+        </p>
+
+      <h2>Part 2: Fun with Frequencies</h2>
+      <h3>Part 2.1: Image "Sharpening"</h3>
+      <p>
+      In this part of the project, we took images and attempted to sharpen them. The broad goal here is to increase high frequencies in the image.
+      To do so, we wrote a high-pass filter function, which subtracts low frequencies (obtained through our gaussian (low pass) filter) from the original image to leave only high frequencies.
+      We managed to obtain some good results here:
+      </p>
+
+      <img src="./input/tajbw.jpg" width="700" height="525">
+      <img src="./sharpened/taj_sharpened.jpg" width="700" height="525">
+      <br>
+      <img src="./input/dogbw.jpg" width="700" height="800">
+      <img src="./sharpened/dog_sharpened.jpg" width="700" height="800">
+
+      <p>
+      Images displayed are sharper, slightly brighter and show better contrast. We also tried the same thing with an originally sharp image by blurring and sharpening it again.
+      </p>
+
+      <img src="./input/salted_egg_bw.jpg" width="450" height="450">
+      <img src="./sharpened/salted_egg_blurred.jpg" width="450" height="450">
+      <img src="./sharpened/salted_egg_resharpened.jpg" width="450" height="450">
+
+      <p>
+      Regular, Blurred and Resharpened respectively. Although the blurring is not obvious, the sharpening can be noticed in the grains of rice and contours of the food of the plate.
+      </p>
+
+      <h3>Part 2.2: Hybrid Images</h3>
+      <p>
+      For this section on Hybrid Images, we attempted to obtain 'hybrid images' which look different from near and afar. This effect is achieved by blending the high frequencies of one image with the low frequencies of another. Since we perceive different frequencies at different distances, the resulting hybrid image would look like the high frequency when near, and be discernable as the low frequency image from far.
+      </p>
+      <img src="./input/nutmeg_aligned.jpg" width="450" height="450">
+      <img src="./input/derek_aligned.jpg" width="450" height="450">
+      <img src="./hybrid_images/catface.jpg" width="450" height="450">
+
+      <p>
+      I produced 2 sets of hybrid images below, one which shows a change of expression, and the other to show a change of textures.
+      </p>
+      <img src="./alignments/smile.jpg" width="450" height="450">
+      <img src="./alignments/serious.jpg" width="450" height="450">
+      <img src="./hybrid_images/faces.jpg" width="450" height="450">
+      <br>
+
+      <img src="./alignments/hyperdunk.JPG" width="500" height="380">
+      <img src="./alignments/kobe.JPG" width="500" height="380">
+      <img src="./hybrid_images/shoes.jpg" width="500" height="380">
+
+      <p>
+      For the hybrid faces image, we can view the process by performing a frequency analysis on the log magnitudes of the fourier transform of each image.
+      </p>
+      <p>
+      Original Images:
+      </p>
+      <img src="./fourier/serious_fourier.jpg" width="450" height="450">
+      <img src="./fourier/smile_fourier.jpg" width="450" height="450">
+      <p>
+      Filtered Images (low, high):
+      </p>
+      <img src="./fourier/serious_low_fourier.jpg" width="450" height="450">
+      <img src="./fourier/smile_high_fourier.jpg" width="450" height="450">
+      <p>
+      Hyrbid Image
+      </p>
+      <img src="./fourier/faces_fourier.jpg" width="450" height="450">
+
+      <p>
+      It was difficult to achieve a success for the provided demo images of Derek and Nutmeg, as it was tough aligning the photos and achieving the same juxtaposition on the website. The image was also not smoothly blended into the face, and I consider it a failure case.
+      </p>
+
+      <h3>Part 2.3: Gaussian and Laplacian Stacks</h3>
+      <p>
+      In this part of the project, we implement a gaussian and laplacian pyramid to reveal layers of the image at different frequencies.
+      To implement my Gaussian stack, I used a sigma of 1. For each layer, I obtained a new layer by doubling sigma and convolveing the previous layer with my Gaussian kernel.
+      To implement my Laplacian stack, I did a similar thing where at each layer, I computed a new gaussian layer. However, the Laplacian layer is the differences between the gaussian layer on layer n and n+1. The final layer was the remaining gaussian layer, which accounts for all the lower frequencies I could not reach.
+      </p>
+      <p>
+      I used the gaussian stack on the Dali painting, and applied the laplacian stack on the Dali painting and on my faces image from above and got the following results.
+      </p>
+      <p>Lincoln (Gaussian Stack)</p>
+      <img src="./stacks/lincoln_g/lincoln_g_0.jpg" width="350" height="350">
+      <img src="./stacks/lincoln_g/lincoln_g_1.jpg" width="350" height="350">
+      <img src="./stacks/lincoln_g/lincoln_g_2.jpg" width="350" height="350">
+      <img src="./stacks/lincoln_g/lincoln_g_3.jpg" width="350" height="350">
+      <img src="./stacks/lincoln_g/lincoln_g_4.jpg" width="350" height="350">
+
+      <p>Lincoln (Laplacian Stack)</p>
+      <img src="./stacks/lincoln_l/lincoln_l_0.jpg" width="350" height="350">
+      <img src="./stacks/lincoln_l/lincoln_l_1.jpg" width="350" height="350">
+      <img src="./stacks/lincoln_l/lincoln_l_2.jpg" width="350" height="350">
+      <img src="./stacks/lincoln_l/lincoln_l_3.jpg" width="350" height="350">
+      <img src="./stacks/lincoln_l/lincoln_l_4.jpg" width="350" height="350">
+      <img src="./stacks/lincoln_l/lincoln_l_5.jpg" width="350" height="350">
+      <img src="./stacks/lincoln_l/lincoln_l_6.jpg" width="350" height="350">
+      <img src="./stacks/lincoln_l/lincoln_l_7.jpg" width="350" height="350">
+      <img src="./stacks/lincoln_l/lincoln_l_8.jpg" width="350" height="350">
+
+      <p>Faces (Laplacian Stack)</p>
+      <img src="./stacks/faces_l/faces_l_0.jpg" width="350" height="350">
+      <img src="./stacks/faces_l/faces_l_1.jpg" width="350" height="350">
+      <img src="./stacks/faces_l/faces_l_2.jpg" width="350" height="350">
+      <img src="./stacks/faces_l/faces_l_3.jpg" width="350" height="350">
+      <img src="./stacks/faces_l/faces_l_4.jpg" width="350" height="350">
+      <img src="./stacks/faces_l/faces_l_5.jpg" width="350" height="350">
+      <img src="./stacks/faces_l/faces_l_6.jpg" width="350" height="350">
+      <img src="./stacks/faces_l/faces_l_7.jpg" width="350" height="350">
+      <img src="./stacks/faces_l/faces_l_8.jpg" width="350" height="350">
+
+      <h3>Part 2.4: Multiresolution Blending</h3>
+      <p>
+      In this part of the project, we implement a blending algorithm that attempts to join 2 images across a smoth transitional line.
+      To do this, we used the algorithm from Burt and Adelson's 1983 paper.
+      <p>
+      1) Align the images to get 2 images of the same size and rough alignment
+      </p>
+      <p>
+      2) Then, we generated laplacian pyramids for each image of depth 10.
+      </p>
+      <p>
+      3) Create an image 'mask' which defines the boundaries between 2 images. We create a gaussian stack from this mask, which helps blur the boundaries of each image to a different degree at different levels.
+      </p>
+      <p>
+      4) We assmble a new stack by summing the layers of each image (A and B) multiplied by the mask for that layer. That is, for layer x, Result_x = A_x(Mask_x) + B_x(1 - Mask_x)
+      </p>
+      <p>
+      5) Finally, to get our blended image, we sum all layers of result to get a final image.
+      </p>
+      <p>
+      In experimenting with the Oraple, we weren't able to achieve a blending as smooth as on the website. The much brighter hue of the orange and darker hue of the apple made the boundary very apparent. Even when experimenting with additional layers (up to 50) and different values of sigma, we were unable to achieve a great result.
+      <p>
+      <img src="./blending/appleorange.jpg" width="700" height="800">
+
+      <p>
+      With other images, however, our results were much better!
+      <p>
+      <img src="./input/husky_aligned.jpg" width="700" height="550">
+      <img src="./input/moose_aligned.jpg" width="700" height="550">
+
+      <p>
+      For the 2 images above, we achieved
+      <p>
+      <img src="./blending/huskymoose.jpg" width="700" height="550">
+      <img src="./blending/moosehusky.jpg" width="700" height="550">
+      <p>
+      The first image worked better due to the similarity in contrast between the moose's face and the dogs body, compared to the whiteness of the dogs face on the moose' brown body.
+      <p>
+
+      <img src="./input/lion_aligned.jpg" width="700" height="550">
+      <img src="./input/seal_aligned.jpg" width="700" height="550">
+      <p>
+      For the 2 images above, we achieved
+      <p>
+      <img src="./blending/sealion.jpg" width="700" height="550">
+      <img src="./blending/lionseal.jpg" width="700" height="550">
+
+      <p>
+      To illustrate the process, we see each layer of our laplacian stacks (multiplied by the filter) and their sum
+      </p>
+      <p>
+      Level 1:
+      </p>
+      <img src="./blending/sealion/lion_layer_0.jpg" width="350" height="350">
+      <img src="./blending/sealion/seal_layer_0.jpg" width="350" height="350">
+      <img src="./blending/sealion/sealion_layer_0.jpg" width="350" height="350">
+      <p>
+      Level 2:
+      </p>
+      <img src="./blending/sealion/lion_layer_1.jpg" width="350" height="350">
+      <img src="./blending/sealion/seal_layer_1.jpg" width="350" height="350">
+      <img src="./blending/sealion/sealion_layer_1.jpg" width="350" height="350">
+      <p>
+      Level 3:
+      </p>
+      <img src="./blending/sealion/lion_layer_2.jpg" width="350" height="350">
+      <img src="./blending/sealion/seal_layer_2.jpg" width="350" height="350">
+      <img src="./blending/sealion/sealion_layer_2.jpg" width="350" height="350">
+      <p>
+      Level 4:
+      </p>
+      <img src="./blending/sealion/lion_layer_3.jpg" width="350" height="350">
+      <img src="./blending/sealion/seal_layer_3.jpg" width="350" height="350">
+      <img src="./blending/sealion/sealion_layer_3.jpg" width="350" height="350">
+      <p>
+      Level 5:
+      </p>
+      <img src="./blending/sealion/lion_layer_4.jpg" width="350" height="350">
+      <img src="./blending/sealion/seal_layer_4.jpg" width="350" height="350">
+      <img src="./blending/sealion/sealion_layer_4.jpg" width="350" height="350">
+
+
+  </body>
+  </html>
